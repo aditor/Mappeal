@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html>
+<script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">
+    </script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <head>
-  	        <title>{{ title }} - Microblog</title>
+
     <style>
        /* Set the size of the div element that contains the map */
       #map {
@@ -25,14 +28,16 @@
     <!--The div element for the map -->
     <div id="map"></div>
     <script>
+
 // Initialize and add the map
+
+// first search in box, go to place on map
+// THEN click on map to show dots only in certain neighborhoods
+// LAter, add a radius choice, so they can choose larger/smaller circles
+
+
 function initMap() {
  
-
-  var locationsPre = '{{ placeArr }}';
-  var locations = locationsPre["payload"];
-
- var center = {lat: locations[0]["center"]["lat"], lng: locations[0]["center"]["lon"]};
 
   // var locations = [
   //   ['Philz Coffee<br>\
@@ -53,34 +58,60 @@ function initMap() {
   // ];
 var map = new google.maps.Map(document.getElementById('map'), {
     zoom: 9,
-    center: center
+    center: {lat: 45.5, lng: -73}
   });
 
 var circle = {
     path: google.maps.SymbolPath.CIRCLE,
     fillColor: 'red',
     fillOpacity: .4,
-    scale: 4.5,
-    strokeColor: 'white',
-    strokeWeight: 1
+    scale: 4.5
 };
 
 var infowindow =  new google.maps.InfoWindow({});
 var marker, count;
-	for (count = 0; count < locations.length; count++) {
-		    marker = new google.maps.Marker({
-		      position: new google.maps.LatLng(locations[count]["center"]["lat"], locations["count"]["lon"]),
-		      map: map,
-		      title: locations[count][name],
-		      icon: circle
-		    });
-		google.maps.event.addListener(marker, 'click', (function (marker, count) {
-		      return function () {
-		        infowindow.setContent(locations[count]["name"]);
-		        infowindow.open(map, marker);
-		      }
-		})(marker, count));
-	  }
+var markercollect = [];
+	// for (count = 0; count < locations.length; count++) {
+	// 	    marker = new google.maps.Marker({
+	// 	      position: new google.maps.LatLng(locations[count]["center"]["lat"], locations[count]["center"]["lon"]),
+	// 	      map: map,
+	// 	      title: locations[count][name],
+	// 	      icon: circle
+	// 	    });
+	// 	google.maps.event.addListener(marker, 'click', (function (marker, count) {
+	// 	      return function () {
+	// 	        infowindow.setContent(locations[count]["name"]);
+	// 	        infowindow.open(map, marker);
+	// 	      }
+	// 	})(marker, count));
+	// 	markercollect.push(marker);
+	// }
+
+  map.addListener('click', function(event) {
+  	var pointArr = [event.latLng.lat(), event.latLng.lng()];
+  	console.log(pointArr);
+  	$.ajax({
+            url: '/api/search',
+            type: 'get',
+            //send the latlon below
+            data: JSON.stringify({"stuff":pointArr}),
+            dataType: 'json',
+            contentType: 'application/json'
+        }).done(function(data){
+        	console.log("done");
+        	console.log(data);
+        	//generate the map below with the points on it
+          // generateMedList(data[0].medication);
+        }).fail(function(data){
+            console.error("ERROR - Failed:" + data);
+        });
+
+  });
+
+	   // Add a marker clusterer to manage the markers.
+        var markerCluster = new MarkerClusterer(map, markercollect,
+            {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+      
 }
     </script>
     <!--Load the API from the specified URL
