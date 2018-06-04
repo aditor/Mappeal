@@ -8,7 +8,7 @@
     <style>
        /* Set the size of the div element that contains the map */
       #map {
-        height: 400px;  /* The height is 400 pixels */
+        height: 1000px;  /* The height is 400 pixels */
         width: 100%;  /* The width is the width of the web page */
        }
     </style>
@@ -34,11 +34,38 @@
 // first search in box, go to place on map
 // THEN click on map to show dots only in certain neighborhoods
 // LAter, add a radius choice, so they can choose larger/smaller circles
+function plotMap(res, map){
+var circle = {
+    path: google.maps.SymbolPath.CIRCLE,
+    fillColor: 'red',
+    fillOpacity: .4,
+    scale: 4.5
+};
 
+var infowindow =  new google.maps.InfoWindow({});
+var marker, count;
+var markercollect = [];
+var locations = JSON.parse(res)['payload'];
+	for (count = 0; count < locations.length; count++) {
+		    marker = new google.maps.Marker({
+		      position: new google.maps.LatLng(locations[count]["center"]["lat"], locations[count]["center"]["lon"]),
+		      map: map,
+		      title: locations[count][name],
+		      icon: circle
+		    });
+		google.maps.event.addListener(marker, 'click', (function (marker, count) {
+		      return function () {
+		        infowindow.setContent(locations[count]["name"]);
+		        infowindow.open(map, marker);
+		      }
+		})(marker, count));
+	}
+
+}
 
 function initMap() {
  
-
+  var that = this;
   // var locations = [
   //   ['Philz Coffee<br>\
   //   801 S Hope St A, Los Angeles, CA 90017<br>\
@@ -61,16 +88,7 @@ var map = new google.maps.Map(document.getElementById('map'), {
     center: {lat: 45.5, lng: -73}
   });
 
-var circle = {
-    path: google.maps.SymbolPath.CIRCLE,
-    fillColor: 'red',
-    fillOpacity: .4,
-    scale: 4.5
-};
-
-var infowindow =  new google.maps.InfoWindow({});
-var marker, count;
-var markercollect = [];
+this.map = map;
 	// for (count = 0; count < locations.length; count++) {
 	// 	    marker = new google.maps.Marker({
 	// 	      position: new google.maps.LatLng(locations[count]["center"]["lat"], locations[count]["center"]["lon"]),
@@ -92,25 +110,22 @@ var markercollect = [];
   	console.log(pointArr);
   	$.ajax({
             url: '/api/search',
-            type: 'get',
+            type: 'POST',
             //send the latlon below
             data: JSON.stringify({"stuff":pointArr}),
-            dataType: 'json',
-            contentType: 'application/json'
-        }).done(function(data){
-        	console.log("done");
-        	console.log(data);
-        	//generate the map below with the points on it
-          // generateMedList(data[0].medication);
+            contentType:'application/json;charset=UTF-8',
+            success: function(result){
+            	console.log("YESSSS")
+            	plotMap(result, that.map);
+            }
         }).fail(function(data){
             console.error("ERROR - Failed:" + data);
         });
-
   });
 
-	   // Add a marker clusterer to manage the markers.
-        var markerCluster = new MarkerClusterer(map, markercollect,
-            {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+	   // // Add a marker clusterer to manage the markers.
+    //     var markerCluster = new MarkerClusterer(map, markercollect,
+    //         {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
       
 }
     </script>
@@ -119,8 +134,8 @@ var markercollect = [];
     * The key parameter will contain your own API key (which is not needed for this tutorial)
     * The callback parameter executes the initMap() function
     -->
-    <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4&callback=initMap">
-    </script>
+    <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4&callback=initMap" async defer>
+     </script>
   </body>
 </html>

@@ -13,50 +13,48 @@ def index():
     user = {'username': 'Miguel'}
     return render_template('index.html', title='Home', user=user)
 
-@app.route('/api/search')
+@app.route('/api/search', methods=["POST"])
 def search():
-    output = json.dumps(request.json['stuff'])
-    print("this is the request" + output)
-    # zID = 'X1-ZWz1ggc591y5fv_6h6e1'
-    # address = urllib.quote("Las Vegas Blvd") 
-    # # request.args.get('fname', default = "",type = str)
-    # city = request.args.get('city', default = "",type = str)
-    # # https://en.wikipedia.org/wiki/ISO_3166-1
-    # overpass_url = "http://overpass-api.de/api/interpreter"
-    # overpass_query = """
-    # [out:json];
-    # area[name = "New York"];
-    # (
-    #     way["building"~"residential|housing|terrace|detached|apartments|hotel"](area);
-    # );
-    # out center;
-    # """
-    # response = requests.get(overpass_url, 
-    #                         params={'data': overpass_query})
-    # data = response.json()["elements"]
-    # places = []
-    # for loc in data:
-    # 	di = {}
-    # 	di['center'] = loc['center']
-    # 	di['type'] = loc['tags']['building']
-    # 	try:
-    #        di['addr'] = loc['tags']['addr:street']
-    #        di['name'] = loc['tags']['name']
-    #     except KeyError:
-    #        pass
+    inputLat = json.dumps(request.json['stuff'][0])
+    inputLon = json.dumps(request.json['stuff'][1])
+    print("this is the request")
 
-    #     places.append(di)
+    overpass_url = "http://overpass-api.de/api/interpreter"
+    overpass_query = """
+    [out:json];
+    area["ISO3166-1"="US"][admin_level=2];
+    (
+        way(around:10000,"""+str(inputLat)+""","""+str(inputLon)+""")["building"~"residential|housing|terrace|detached|apartments|hotel"](area);
+    );
+    out center;
+    """
+    print(overpass_query);
+    response = requests.get(overpass_url, 
+                            params={'data': overpass_query})
+    data = response.json()["elements"]
+    places = []
+    for loc in data:
+    	di = {}
+    	di['center'] = loc['center']
+    	di['type'] = loc['tags']['building']
+    	try:
+           di['addr'] = loc['tags']['addr:street']
+           di['name'] = loc['tags']['name']
+        except KeyError:
+           pass
 
-    # finalDict = {}
-    # finalDict['payload'] = places
+        places.append(di)
 
-    # toPass = json.dumps(finalDict)
+    finalDict = {}
+    finalDict['payload'] = places
+
+    toPass = json.dumps(finalDict)
 
 
     # user = {'username': 'TEST!'}
 
     # return render_template('index.html', placeArr=toPass)
-    return {'test':"SANDWICH"};
+    return toPass
 
 
 def pp_json(json_thing, sort=True, indents=4):
