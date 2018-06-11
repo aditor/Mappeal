@@ -6,6 +6,9 @@ import requests
 import urllib
 import xml.etree.ElementTree as ET
 import json
+import random
+
+
 
 @app.route('/')
 @app.route('/index')
@@ -15,46 +18,22 @@ def index():
 
 @app.route('/api/search', methods=["POST"])
 def search():
-    inputLat = json.dumps(request.json['stuff'][0])
-    inputLon = json.dumps(request.json['stuff'][1])
+    cityToSearch = request.json['city']
+
+    city_borders = requests.get("https://api.teleport.org/api/urban_areas/slug%3A" + cityToSearch + "/").json()['bounding_box']['latlon']
+
     print("this is the request")
-
-    overpass_url = "http://overpass-api.de/api/interpreter"
-    overpass_query = """
-    [out:json];
-    area["ISO3166-1"="US"][admin_level=2];
-    (
-        way(around:10000,"""+str(inputLat)+""","""+str(inputLon)+""")["building"~"residential|housing|terrace|detached|apartments|hotel"](area);
-    );
-    out center;
-    """
-    print(overpass_query);
-    response = requests.get(overpass_url, 
-                            params={'data': overpass_query})
-    data = response.json()["elements"]
-    places = []
-    for loc in data:
-    	di = {}
-    	di['center'] = loc['center']
-    	di['type'] = loc['tags']['building']
-    	try:
-           di['addr'] = loc['tags']['addr:street']
-           di['name'] = loc['tags']['name']
-        except KeyError:
-           pass
-
-        places.append(di)
-
-    finalDict = {}
-    finalDict['payload'] = places
-
-    toPass = json.dumps(finalDict)
+  
+    places_to_visit = [generate_random_points(city_borders) for i in xrange(100)]
+    return json.dumps(places_to_visit)
 
 
-    # user = {'username': 'TEST!'}
+def generate_random_points(city_borders):
+    latitude = random.uniform(city_borders['south'], city_borders['north'])
+    longitude = random.uniform(city_borders['west'], city_borders['east'])
+    return latitude, longitude
 
-    # return render_template('index.html', placeArr=toPass)
-    return toPass
+
 
 
 def pp_json(json_thing, sort=True, indents=4):
@@ -63,21 +42,3 @@ def pp_json(json_thing, sort=True, indents=4):
     else:
         print(json.dumps(json_thing, sort_keys=sort, indent=indents))
     return None
-
-    # with open('data2.txt', 'w') as outfile:
-    #     json.dump(data, outfile)
-
-    # print("DATAAA" + str(data))
-    # pp_json(str(data))
-
-
-
-    # total = 'http://www.zillow.com/webservice/GetSearchResults.htm?zws-id=' + zID + '&address=' + address + '&citystatezip=' + cityzip
-    # print("HERES THE URL" + total)
-    # r = requests.get(total)
-    # treeRoot = ET.parse(r.content)
-
-    # for result in root.findall('result'):
-    #     rank = country.find('rank').text
-    #     name = country.get('name')
-    #     print(name, rank)

@@ -18,11 +18,9 @@
 
     <h3>My Google Maps Demo</h3>
 
-    <form action="/search">
-	  Enter city: <input type="text" name="city"><br>
-	  <input type="submit" value="Submit">
-	</form>
 
+	  Enter city: <input id="cityInput"type="text" name="city"><br>
+	  <button id="mapBtn">Submit</button>
 
 
     <!--The div element for the map -->
@@ -35,93 +33,60 @@
 // THEN click on map to show dots only in certain neighborhoods
 // LAter, add a radius choice, so they can choose larger/smaller circles
 function plotMap(res, map){
-var circle = {
-    path: google.maps.SymbolPath.CIRCLE,
-    fillColor: 'red',
-    fillOpacity: .4,
-    scale: 4.5
-};
-
-var infowindow =  new google.maps.InfoWindow({});
-var marker, count;
-var markercollect = [];
-var locations = JSON.parse(res)['payload'];
-	for (count = 0; count < locations.length; count++) {
-		    marker = new google.maps.Marker({
-		      position: new google.maps.LatLng(locations[count]["center"]["lat"], locations[count]["center"]["lon"]),
-		      map: map,
-		      title: locations[count][name],
-		      icon: circle
-		    });
-		google.maps.event.addListener(marker, 'click', (function (marker, count) {
-		      return function () {
-		        infowindow.setContent(locations[count]["name"]);
-		        infowindow.open(map, marker);
-		      }
-		})(marker, count));
-	}
+    var circle = {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: 'red',
+        fillOpacity: .4,
+        scale: 4.5
+    };
+    var infowindow =  new google.maps.InfoWindow({});
+    var marker, count;
+    var markercollect = [];
+    console.log(res)
+    //var locations = JSON.parse(res)['payload'];
+    	for (count = 0; count < res.length; count++) {
+    		    marker = new google.maps.Marker({
+    		      position: new google.maps.LatLng(res[count][0], res[count][1]),
+    		      map: map,
+    		      //title: locations[count][name],
+    		      icon: circle
+    		    });
+    		google.maps.event.addListener(marker, 'click', (function (marker, count) {
+    		      return function () {
+    		        //infowindow.setContent(res[count]["name"]);
+    		        infowindow.open(map, marker);
+    		      }
+    		})(marker, count));
+    	}
 
 }
 
 function initMap() {
  
-  var that = this;
-  // var locations = [
-  //   ['Philz Coffee<br>\
-  //   801 S Hope St A, Los Angeles, CA 90017<br>\
-  //  <a href="https://goo.gl/maps/L8ETMBt7cRA2">Get Directions</a>',   34.046438, -118.259653],
-  //   ['Philz Coffee<br>\
-  //   525 Santa Monica Blvd, Santa Monica, CA 90401<br>\
-  //  <a href="https://goo.gl/maps/PY1abQhuW9C2">Get Directions</a>', 34.017951, -118.493567],
-  //   ['Philz Coffee<br>\
-  //   146 South Lake Avenue #106, At Shoppers Lane, Pasadena, CA 91101<br>\
-  //   <a href="https://goo.gl/maps/eUmyNuMyYNN2">Get Directions</a>', 34.143073, -118.132040],
-  //   ['Philz Coffee<br>\
-  //   21016 Pacific Coast Hwy, Huntington Beach, CA 92648<br>\
-  //   <a href="https://goo.gl/maps/Cp2TZoeGCXw">Get Directions</a>', 33.655199, -117.998640],
-  //   ['Philz Coffee<br>\
-  //   252 S Brand Blvd, Glendale, CA 91204<br>\
-  //  <a href="https://goo.gl/maps/WDr2ef3ccVz">Get Directions</a>', 34.142823, -118.254569]
-  // ];
+var that = this;
+
 var map = new google.maps.Map(document.getElementById('map'), {
     zoom: 9,
     center: {lat: 45.5, lng: -73}
   });
 
 this.map = map;
-	// for (count = 0; count < locations.length; count++) {
-	// 	    marker = new google.maps.Marker({
-	// 	      position: new google.maps.LatLng(locations[count]["center"]["lat"], locations[count]["center"]["lon"]),
-	// 	      map: map,
-	// 	      title: locations[count][name],
-	// 	      icon: circle
-	// 	    });
-	// 	google.maps.event.addListener(marker, 'click', (function (marker, count) {
-	// 	      return function () {
-	// 	        infowindow.setContent(locations[count]["name"]);
-	// 	        infowindow.open(map, marker);
-	// 	      }
-	// 	})(marker, count));
-	// 	markercollect.push(marker);
-	// }
 
-  map.addListener('click', function(event) {
-  	var pointArr = [event.latLng.lat(), event.latLng.lng()];
-  	console.log(pointArr);
-  	$.ajax({
+   $('#mapBtn').on('click', function () {
+        var cityToSearch = $('#cityInput').val();
+        $.ajax({
             url: '/api/search',
             type: 'POST',
             //send the latlon below
-            data: JSON.stringify({"stuff":pointArr}),
-            contentType:'application/json;charset=UTF-8',
+            data: JSON.stringify({"city":cityToSearch}),
+            contentType:'application/json',
             success: function(result){
-            	console.log("YESSSS")
-            	plotMap(result, that.map);
+             plotMap(JSON.parse(result), that.map);
             }
         }).fail(function(data){
             console.error("ERROR - Failed:" + data);
         });
-  });
+    });
 
 	   // // Add a marker clusterer to manage the markers.
     //     var markerCluster = new MarkerClusterer(map, markercollect,
