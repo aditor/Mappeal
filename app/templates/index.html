@@ -37,26 +37,42 @@ function plotMap(res, map){
         path: google.maps.SymbolPath.CIRCLE,
         fillColor: 'red',
         fillOpacity: .4,
-        scale: 4.5
+        strokeColor: 'white',
+        strokeWeight: .5,
+        scale: 3
     };
     var infowindow =  new google.maps.InfoWindow({});
     var marker, count;
     var markercollect = [];
-    console.log(res)
+    //console.log(res)
     //var locations = JSON.parse(res)['payload'];
     	for (count = 0; count < res.length; count++) {
-    		    marker = new google.maps.Marker({
-    		      position: new google.maps.LatLng(res[count][0], res[count][1]),
-    		      map: map,
-    		      //title: locations[count][name],
-    		      icon: circle
-    		    });
-    		google.maps.event.addListener(marker, 'click', (function (marker, count) {
-    		      return function () {
-    		        //infowindow.setContent(res[count]["name"]);
-    		        infowindow.open(map, marker);
-    		      }
-    		})(marker, count));
+
+          //https://maps.googleapis.com/maps/api/geocode/json?latlng=40.714224,-73.961452&key=AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4
+          $.get('https://maps.googleapis.com/maps/api/geocode/json', {
+              key: "AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4",
+              latlng: res[count][0] + ","+ res[count][1]
+            }, function(data) {
+             
+                data.results.forEach(function(element) {
+                  console.log(element);
+
+                  marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(element.geometry.location.lat, element.geometry.location.lng),
+                    map: map,
+                    //title: locations[count][name],
+                    icon: circle
+                  });
+                  google.maps.event.addListener(marker, 'click', (function (marker, count) {
+                    return function () {
+                      //infowindow.setContent(res[count]["name"]);
+                      infowindow.open(map, marker);
+                    }
+                  })(marker, count));
+                });
+            });
+
+    		    
     	}
 
 }

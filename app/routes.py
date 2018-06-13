@@ -25,6 +25,12 @@ def search():
     print("this is the request")
   
     places_to_visit = [generate_random_points(city_borders) for i in xrange(100)]
+
+    # snapToRoadStr = map(toLatLonPair, places_to_visit)
+    # snapRequest = '|'.join(map(str, snapToRoadStr)) 
+    # print(snapRequest)
+    # changedPoints = requests.get("https://roads.googleapis.com/v1/snapToRoads?path=" +snapRequest+ "&key=AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4").json()
+    # //print(places_to_visit)
     return json.dumps(places_to_visit)
 
 
@@ -34,7 +40,8 @@ def generate_random_points(city_borders):
     return latitude, longitude
 
 
-
+def toLatLonPair(x):
+    return str(x[0]) + "," + str(x[1])
 
 def pp_json(json_thing, sort=True, indents=4):
     if type(json_thing) is str:
