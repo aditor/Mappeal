@@ -11,6 +11,10 @@
         height: 1000px;  /* The height is 400 pixels */
         width: 100%;  /* The width is the width of the web page */
        }
+
+       #streetview {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -24,6 +28,7 @@
 
 
     <!--The div element for the map -->
+    <img id="streetview" />
     <div id="map"></div>
     <script>
 
@@ -54,22 +59,68 @@ function plotMap(res, map){
               latlng: res[count][0] + ","+ res[count][1]
             }, function(data) {
              
-                data.results.forEach(function(element) {
-                  console.log(element);
+                for (count2 = 0; count2 < data.results.length; count2++) {
+                  console.log(data.results[count2]);
 
                   marker = new google.maps.Marker({
-                    position: new google.maps.LatLng(element.geometry.location.lat, element.geometry.location.lng),
+                    position: new google.maps.LatLng(data.results[count2].geometry.location.lat, data.results[count2].geometry.location.lng),
                     map: map,
                     //title: locations[count][name],
                     icon: circle
                   });
-                  google.maps.event.addListener(marker, 'click', (function (marker, count) {
-                    return function () {
-                      //infowindow.setContent(res[count]["name"]);
-                      infowindow.open(map, marker);
-                    }
-                  })(marker, count));
-                });
+
+                  var streetViewURL = "https://maps.googleapis.com/maps/api/streetview?location="+ data.results[count2].geometry.location.lat + ","+ data.results[count2].geometry.location.lng + "&";
+
+                  // $.get(streetViewURL,  {
+                  //     key: "AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4"
+                  //   }, function(image) {
+                          // var append_img = $(image);
+                          // var img_base64 = $(image).attr('src');
+                          // var image = new Image();
+                          // image.src = img_base64;
+                          // var canvas = document.getElementById('canvas').getContext('2d');
+                          // canvas.drawImage(image, 0, 0);
+
+                          // if(image != null){
+
+                              // var infowindow = new google.maps.InfoWindow({
+                              //   content: image
+                              // });
+
+                              
+                              marker.addListener('mouseover', function() {
+                                $('#streetview')
+                                  .attr('src', streetViewURL + $.param({
+                                    heading: "151.78",
+                                    size:"600x400",
+                                    pitch: "-0.76"
+                                  })).show();
+                              });
+                          // }
+                            //   google.maps.event.addListener(marker, 'click', (function (marker, count) {
+                            //   return function () {
+                            //     infowindow.setContent(image);
+                            //     infowindow.open(map, marker);
+                            //   }
+                            // })(marker, count));
+                    //       }
+                         
+                          
+
+                    // })
+                   
+
+                  // google.maps.event.addListener(marker, 'click', (function (marker, count) {
+                  //   return function () {
+                  //     //infowindow.setContent(res[count]["name"]);
+                  //     infowindow.open(map, marker);
+                  //   }
+                  // })(marker, count));
+
+                  break;
+                }
+
+
             });
 
     		    
