@@ -47,10 +47,13 @@ function plotMap(res, map){
         scale: 3
     };
     var infowindow =  new google.maps.InfoWindow({});
-    var marker, count;
+    var marker;
+    var count;
     var markercollect = [];
+    var listOfURLS = [];
     //console.log(res)
     //var locations = JSON.parse(res)['payload'];
+    
     	for (count = 0; count < res.length; count++) {
 
           //https://maps.googleapis.com/maps/api/geocode/json?latlng=40.714224,-73.961452&key=AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4
@@ -58,20 +61,97 @@ function plotMap(res, map){
               key: "AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4",
               latlng: res[count][0] + ","+ res[count][1]
             }, function(data) {
-             
+
                 for (count2 = 0; count2 < data.results.length; count2++) {
-                  console.log(data.results[count2]);
+                  //console.log(data.results[count2]);
 
                   marker = new google.maps.Marker({
                     position: new google.maps.LatLng(data.results[count2].geometry.location.lat, data.results[count2].geometry.location.lng),
-                    map: map,
-                    //title: locations[count][name],
+                     map: map,
                     icon: circle
                   });
 
-                  var streetViewURL = "https://maps.googleapis.com/maps/api/streetview?location="+ data.results[count2].geometry.location.lat + ","+ data.results[count2].geometry.location.lng + "&";
+                  var streetViewURL = "https://maps.googleapis.com/maps/api/streetview?location=" + data.results[count2].geometry.location.lat + ","+ data.results[count2].geometry.location.lng + "&";
 
-                  // $.get(streetViewURL,  {
+                  var fullStreetURL = streetViewURL + $.param({
+                                    heading: "151.78",
+                                    size:"600x400",
+                                    pitch: "-0.76"
+                                  })
+                  console.log("HERE" + fullStreetURL)
+                  listOfURLS.push(fullStreetURL)
+
+                  marker.addListener('mouseover', function() {
+                    $('#streetview')
+                      .attr('src', fullStreetURL).show();
+                  });
+                  break;
+                }
+            });
+    	}
+      // console.log(JSON.stringify({"here":listOfURLS}))
+      // var packaged = {"allPoints" : listOfURLS}
+      // $.ajax({
+      //       url: '/analyze',
+      //       type: 'POST',
+      //       //send the latlon below
+      //       data: JSON.stringify({"pleasework": packaged}),
+      //       contentType:'application/json',
+      //       success: function(result){
+
+      //       }
+      //   }).fail(function(data){
+      //       console.error("ERROR - Failed:" + data);
+      //   });
+
+}
+
+function initMap() {
+
+var that = this;
+
+var map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 9,
+    center: {lat: 45.5, lng: -73}
+  });
+
+this.map = map;
+
+   $('#mapBtn').on('click', function () {
+        var cityToSearch = $('#cityInput').val();
+        $.ajax({
+            url: '/api/search',
+            type: 'POST',
+            //send the latlon below
+            data: JSON.stringify({"city":cityToSearch}),
+            contentType:'application/json',
+            success: function(result){
+              console.log(result);
+             //plotMap(JSON.parse(result), that.map);
+            }
+        }).fail(function(data){
+            console.error("ERROR - Failed:" + data);
+        });
+    });
+
+	   // // Add a marker clusterer to manage the markers.
+    //     var markerCluster = new MarkerClusterer(map, markercollect,
+    //         {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+
+}
+    </script>
+    <!--Load the API from the specified URL
+    * The async attribute allows the browser to render the page while the API loads
+    * The key parameter will contain your own API key (which is not needed for this tutorial)
+    * The callback parameter executes the initMap() function
+    -->
+    <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4&callback=initMap" async defer>
+     </script>
+  </body>
+</html>
+
+<!--                   // $.get(streetViewURL,  {
                   //     key: "AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4"
                   //   }, function(image) {
                           // var append_img = $(image);
@@ -87,16 +167,7 @@ function plotMap(res, map){
                               //   content: image
                               // });
 
-                              
-                              marker.addListener('mouseover', function() {
-                                $('#streetview')
-                                  .attr('src', streetViewURL + $.param({
-                                    heading: "151.78",
-                                    size:"600x400",
-                                    pitch: "-0.76"
-                                  })).show();
-                              });
-                          // }
+                                                        // }
                             //   google.maps.event.addListener(marker, 'click', (function (marker, count) {
                             //   return function () {
                             //     infowindow.setContent(image);
@@ -116,58 +187,4 @@ function plotMap(res, map){
                   //     infowindow.open(map, marker);
                   //   }
                   // })(marker, count));
-
-                  break;
-                }
-
-
-            });
-
-    		    
-    	}
-
-}
-
-function initMap() {
- 
-var that = this;
-
-var map = new google.maps.Map(document.getElementById('map'), {
-    zoom: 9,
-    center: {lat: 45.5, lng: -73}
-  });
-
-this.map = map;
-
-   $('#mapBtn').on('click', function () {
-        var cityToSearch = $('#cityInput').val();
-        $.ajax({
-            url: '/api/search',
-            type: 'POST',
-            //send the latlon below
-            data: JSON.stringify({"city":cityToSearch}),
-            contentType:'application/json',
-            success: function(result){
-             plotMap(JSON.parse(result), that.map);
-            }
-        }).fail(function(data){
-            console.error("ERROR - Failed:" + data);
-        });
-    });
-
-	   // // Add a marker clusterer to manage the markers.
-    //     var markerCluster = new MarkerClusterer(map, markercollect,
-    //         {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
-      
-}
-    </script>
-    <!--Load the API from the specified URL
-    * The async attribute allows the browser to render the page while the API loads
-    * The key parameter will contain your own API key (which is not needed for this tutorial)
-    * The callback parameter executes the initMap() function
-    -->
-    <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4&callback=initMap" async defer>
-     </script>
-  </body>
-</html>
+ -->
