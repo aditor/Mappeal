@@ -4,6 +4,7 @@ from app import app
 from collections import defaultdict
 from clarifai.rest import ClarifaiApp
 from clarifai.rest import Image as ClImage
+import urlparse
 import numpy as np
 import requests
 import urllib
@@ -11,6 +12,7 @@ import xml.etree.ElementTree as ET
 import json
 import random
 import urllib
+import time
 
 
 @app.route('/')
@@ -78,7 +80,8 @@ def generateRandomPoints(cityBorders):
 def streetViewAnalyze(pointsArr):
     app = ClarifaiApp(api_key="c306175f36704228af8ccef5332045dd")
     model = app.models.get('general-v1.3')
-    imageList=[]
+    imageList = []
+    allPoints = {}
 
     for lat,lon in pointsArr:
         params = { 'heading' : "151.78", 
@@ -89,11 +92,35 @@ def streetViewAnalyze(pointsArr):
         streetViewURL = "https://maps.googleapis.com/maps/api/streetview?" + encoded
         imageList.append(ClImage(url=streetViewURL))
     
-    print(streetViewURL)
-    B, C = split_list(imageList)
-    aiRes = model.predict(B)
+    A, B = split_list(imageList)
+    firstBatch = processImages(model.predict(A), allPoints)
+    secondBatch = processImages(model.predict(B), allPoints)
+
+    firstBatch.update(secondBatch)
+
+    print(firstBatch)
+    # print(len(secondBatch))
+    return firstBatch
+    # time.sleep(10)
+    # secondBatch = model.predict(B)
+    # print(len(secondBatch))
+
     
-    print(aiRes)
+
+def processImages(outPut, allPoints):
+    processed = outPut['outputs']
+    for image in processed:
+        conceptList = image['data']['concepts']
+        conceptsToExport = []
+        url = image['input']['data']['image']['url']
+        latlon = urlparse.parse_qs(urlparse.urlparse(url).query)['location'][0]
+        for concept in conceptList:
+            info = {}
+            info['name'] = concept['name']
+            info['value'] = concept['value']
+            conceptsToExport.append(info)
+        allPoints[latlon] = conceptsToExport
+    return allPoints
 
 
 def split_list(a_list):
