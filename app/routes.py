@@ -53,7 +53,7 @@ def search():
     
 # RETURN BOTH THE ARRAY AND ALSO THE ANALYZED RESULTS IN A SINGLE JSON OBJECT
 # {arr: [], analyzed: []}
-    return json.dumps(placesToVisit)
+    return json.dumps(analysis)
 
 
 def generateRandomPoints(cityBorders):
@@ -98,7 +98,7 @@ def streetViewAnalyze(pointsArr):
 
     firstBatch.update(secondBatch)
 
-    print(firstBatch)
+    # print(firstBatch)
     # print(len(secondBatch))
     return firstBatch
     # time.sleep(10)

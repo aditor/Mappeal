@@ -15,6 +15,13 @@
        #streetview {
         display: none;
       }
+      .text {
+          font-weight: bold;
+          z-index: 1;
+          position: absolute;
+          left: 50%;
+          top: 50%;
+      }
     </style>
   </head>
   <body>
@@ -28,7 +35,12 @@
 
 
     <!--The div element for the map -->
-    <img id="streetview" />
+    <div id="block">
+      <div class="text hide">Location Details:</div> <a>
+          <img id="streetview" />
+      </a>
+    </div>
+
     <div id="map"></div>
     <script>
 
@@ -54,41 +66,64 @@ function plotMap(res, map){
     //console.log(res)
     //var locations = JSON.parse(res)['payload'];
     
-    	for (count = 0; count < res.length; count++) {
+    	for (var item in res) {
+        
+        (function(loc){ //create a closure, var
+          var latlon = loc.split(',');
 
-          //https://maps.googleapis.com/maps/api/geocode/json?latlng=40.714224,-73.961452&key=AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4
-          $.get('https://maps.googleapis.com/maps/api/geocode/json', {
-              key: "AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4",
-              latlng: res[count][0] + ","+ res[count][1]
-            }, function(data) {
+          marker = new google.maps.Marker({
+            position: new google.maps.LatLng(parseFloat(latlon[0]), parseFloat(latlon[1])),
+            map: map,
+            icon: circle
+          });
 
-                for (count2 = 0; count2 < data.results.length; count2++) {
-                  //console.log(data.results[count2]);
+          var streetViewURL = "https://maps.googleapis.com/maps/api/streetview?location=" + parseFloat(latlon[0]) + ","+ parseFloat(latlon[1]) + "&";
 
-                  marker = new google.maps.Marker({
-                    position: new google.maps.LatLng(data.results[count2].geometry.location.lat, data.results[count2].geometry.location.lng),
-                     map: map,
-                    icon: circle
-                  });
+          var fullStreetURL = streetViewURL + $.param({
+                            heading: "151.78",
+                            size:"600x400",
+                            pitch: "-0.76"
+                          })
+          var displayString = "";
+          res[loc].forEach(function(item){
+            displayString += item['name'] + "," + item['value']
+          })
 
-                  var streetViewURL = "https://maps.googleapis.com/maps/api/streetview?location=" + data.results[count2].geometry.location.lat + ","+ data.results[count2].geometry.location.lng + "&";
+          marker.addListener('mouseover', function() {
+            $('#streetview')
+              .attr('src', fullStreetURL).show();
 
-                  var fullStreetURL = streetViewURL + $.param({
-                                    heading: "151.78",
-                                    size:"600x400",
-                                    pitch: "-0.76"
-                                  })
-                  console.log("HERE" + fullStreetURL)
-                  listOfURLS.push(fullStreetURL)
+            $('.text').text(displayString);
+          });
 
-                  marker.addListener('mouseover', function() {
-                    $('#streetview')
-                      .attr('src', fullStreetURL).show();
-                  });
-                  break;
-                }
-            });
-    	}
+        })(item);
+       }
+
+          // //https://maps.googleapis.com/maps/api/geocode/json?latlng=40.714224,-73.961452&key=AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4
+          // $.get('https://maps.googleapis.com/maps/api/geocode/json', {
+          //     key: "AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4",
+          //     latlng: res[count][0] + ","+ res[count][1]
+          //   }, function(data) {
+
+          //       for (count2 = 0; count2 < data.results.length; count2++) {
+          //         //console.log(data.results[count2]);
+
+          
+                  // var streetViewURL = "https://maps.googleapis.com/maps/api/streetview?location=" + data.results[count2].geometry.location.lat + ","+ data.results[count2].geometry.location.lng + "&";
+
+                  // var fullStreetURL = streetViewURL + $.param({
+                  //                   heading: "151.78",
+                  //                   size:"600x400",
+                  //                   pitch: "-0.76"
+                  //                 })
+                  // console.log("HERE" + fullStreetURL)
+                  // listOfURLS.push(fullStreetURL)
+
+                  
+                  // break;
+            //     }
+            // });
+  
       // console.log(JSON.stringify({"here":listOfURLS}))
       // var packaged = {"allPoints" : listOfURLS}
       // $.ajax({
@@ -126,8 +161,8 @@ this.map = map;
             data: JSON.stringify({"city":cityToSearch}),
             contentType:'application/json',
             success: function(result){
-              console.log(result);
-             //plotMap(JSON.parse(result), that.map);
+             console.log(result);
+             plotMap(JSON.parse(result), that.map);
             }
         }).fail(function(data){
             console.error("ERROR - Failed:" + data);
