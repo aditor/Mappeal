@@ -31,36 +31,23 @@ def analyze():
 
     image = ClImage(url='https://samples.clarifai.com/metro-north.jpg')
     aiRes = model.predict([image])
-    # print(aiRes)
     return "doneeeee"
-
 
 @app.route('/api/search', methods=["POST"])
 def search():
     cityToSearch = request.json['city']
-    # print(test)
     cityBorders = requests.get("https://api.teleport.org/api/urban_areas/slug%3A" + cityToSearch + "/").json()['bounding_box']['latlon']
 
     print("this is the request")
   
     placesToVisit = [generateRandomPoints(cityBorders) for i in xrange(100)]
     analysis = streetViewAnalyze(placesToVisit)
-    # snapToRoadStr = map(toLatLonPair, places_to_visit)
-    # snapRequest = '|'.join(map(str, snapToRoadStr)) 
-    # print(snapRequest)
-    # changedPoints = requests.get("https://roads.googleapis.com/v1/snapToRoads?path=" +snapRequest+ "&key=AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4").json()
-    # //print(places_to_visit)
-    
-# RETURN BOTH THE ARRAY AND ALSO THE ANALYZED RESULTS IN A SINGLE JSON OBJECT
-# {arr: [], analyzed: []}
+
     return json.dumps(analysis)
 
-
 def generateRandomPoints(cityBorders):
-
     midLon = (cityBorders['west'] + cityBorders['east']) / 2
     midLat = (cityBorders['south'] + cityBorders['north']) / 2
-
     gaussianLat = np.random.normal(midLat, 0.05)
     gaussianLon = np.random.normal(midLon, 0.05)
 
@@ -68,13 +55,9 @@ def generateRandomPoints(cityBorders):
 
     payload = {'key': 'AIzaSyAeFC4kvVAYZHn0xPeQzcFMg7F_wFO7wA4', 'latlng': strLatLon}
     latLonPair = requests.get("https://maps.googleapis.com/maps/api/geocode/json", params=payload).json()['results'][0]['geometry']['location']
-
     snappedLat = latLonPair['lat']
     snappedLon = latLonPair['lng']
 
-    # print(str(snappedLat) + "," + str(snappedLon))
-
-    # return gaussianLat, gaussianLon
     return snappedLat, snappedLon
 
 def streetViewAnalyze(pointsArr):
@@ -98,14 +81,7 @@ def streetViewAnalyze(pointsArr):
 
     firstBatch.update(secondBatch)
 
-    # print(firstBatch)
-    # print(len(secondBatch))
     return firstBatch
-    # time.sleep(10)
-    # secondBatch = model.predict(B)
-    # print(len(secondBatch))
-
-    
 
 def processImages(outPut, allPoints):
     processed = outPut['outputs']
@@ -122,12 +98,9 @@ def processImages(outPut, allPoints):
         allPoints[latlon] = conceptsToExport
     return allPoints
 
-
 def split_list(a_list):
     half = len(a_list)/2
     return a_list[:half], a_list[half:]
-
-
 
 def toLatLonPair(x):
     return str(x[0]) + "," + str(x[1])
